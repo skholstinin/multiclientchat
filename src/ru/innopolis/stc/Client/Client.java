@@ -1,41 +1,35 @@
 package ru.innopolis.stc.Client;
 
+import ru.innopolis.stc.Server.Server;
+
 import java.io.*;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Client {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
+        Socket socket = null;
         try {
-            try (Socket socket = new Socket("127.0.0.1", 8888);
-                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream())) {
-
-                while (socket.isOutputShutdown()) {
-                    if (bufferedReader.ready()) {
-                        System.out.println("client wait data");
-                        Thread.sleep(1000);
-                        String inputData = bufferedReader.readLine();
-                        dataOutputStream.writeUTF(inputData);
-                        dataOutputStream.flush();
-                        Thread.sleep(1000);
-                        if (dataInputStream.read() > -1) {
-                            String inString = dataInputStream.readUTF();
-                            System.out.println(inString);
-                        }
-                        break;
-                    }
-                    System.out.println("Client send and waiting...");
-                    Thread.sleep(2000);
-                    if (dataInputStream.read() > -1) {
-                        String inString = dataInputStream.readUTF();
-                        System.out.println(inString);
-                    }
-                    System.out.println("Close connection");
-                }
-            }
+            socket = new Socket("localhost", Server.SERVER_PORT);
         } catch (IOException ex) {
             ex.printStackTrace();
+        }
+        try {
+            OutputStreamWriter outputStreamServerWriter = new OutputStreamWriter(socket.getOutputStream());
+            InputStreamReader inputStreamServerReader = new InputStreamReader(socket.getInputStream());
+            BufferedReader bufferedReader = new BufferedReader(inputStreamServerReader);
+            Scanner scaner = new Scanner(System.in);
+            String message = null;
+            while ((message = scaner.nextLine()) != "") {
+                BufferedWriter bufferedWriter = new BufferedWriter(outputStreamServerWriter);
+                bufferedWriter.write(message);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
+                System.out.println("Echo " + bufferedReader.readLine());
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
